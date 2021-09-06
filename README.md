@@ -14,32 +14,58 @@ Add the dependency into your `pom.xml`
 <dependency>
     <groupId>io.github.mihaita-tinta</groupId>
     <artifactId>webauthn-spring-boot-starter</artifactId>
-    <version>0.0.11-SNAPSHOT</version>
+    <version>0.0.12-SNAPSHOT</version>
 </dependency>
 ```
 Customize different callbacks to detect when something happens
 
 ```java
+@Configuration
+@EnableWebSecurity
+@EnableWebAuthn
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-@Override
-protected void configure(HttpSecurity http) throws Exception {
+    @Autowired
+    AccountRepository accountRepository;
+
+    @Override
+    public void configure(WebSecurity web) {
+        web
+                .ignoring()
+                .antMatchers(
+                        "/",
+                        "/index.html",
+                        "/login.html",
+                        "/new-device.html",
+                        "/node_modules/web-authn-components/dist/**",
+                        "/error"
+                );
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
         http
-            .csrf().disable()
-            .logout(customizer -> {
-                customizer.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler());
-                customizer.deleteCookies("JSESSIONID");
-            })
-            .authorizeRequests()
-            .anyRequest()
-            .authenticated()
-            .and()
-            .apply(new WebAuthnConfigurer()
-                .defaultLoginSuccessHandler((user, credentials) -> log.info("user logged in: {}", user))
-                .registerSuccessHandler(user -> {
-                    log.info("new user registered: {}", user);
+                .csrf().disable()
+                .headers().frameOptions().sameOrigin()
+                .and()
+                .logout(customizer -> {
+                    customizer.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler());
+                    customizer.deleteCookies("JSESSIONID");
                 })
-            );
-        }
+                .authorizeRequests()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .apply(new WebAuthnConfigurer()
+                        .defaultLoginSuccessHandler((user, credentials) -> log.info("user logged in: {}", user))
+                        .registerSuccessHandler(user -> {
+                            log.info("new user registered: {}", user);
+                        })
+                );
+    }
+}
+
 ```
 
 There are different properties you can change depending on your needs.
@@ -70,4 +96,14 @@ webauthn:
       -
         alg: RS1
         type: PUBLIC_KEY
+spring:
+  resources:
+    static-locations: classpath:/META-INF/resources/webauthn
+  jackson:
+    default-property-inclusion: non_absent
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+  h2:
+    console:
+      enabled: true
 ```
