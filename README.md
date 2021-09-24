@@ -14,7 +14,7 @@ Add the dependency into your `pom.xml`
 <dependency>
     <groupId>io.github.mihaita-tinta</groupId>
     <artifactId>webauthn-spring-boot-starter</artifactId>
-    <version>0.0.12-SNAPSHOT</version>
+    <version>0.0.16-SNAPSHOT</version>
 </dependency>
 ```
 Customize different callbacks to detect when something happens
@@ -35,7 +35,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .ignoring()
                 .antMatchers(
                         "/",
-                        "/index.html",
+                        "/register.html",
                         "/login.html",
                         "/new-device.html",
                         "/node_modules/web-authn-components/dist/**",
@@ -88,7 +88,7 @@ webauthn:
         alg: EdDSA
         type: PUBLIC_KEY
       -
-        alg:ES256
+        alg: ES256
         type: PUBLIC_KEY
       -
         alg: RS256
